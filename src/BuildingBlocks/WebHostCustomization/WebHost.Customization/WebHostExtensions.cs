@@ -38,7 +38,7 @@ namespace Microsoft.AspNetCore.Hosting
                     else
                     {
                         var retries = 10;
-                        var retry = Policy.Handle<SqlException>()
+                        var retryPolicy = Policy.Handle<SqlException>()
                             .WaitAndRetry(
                                 retryCount: retries,
                                 sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
@@ -51,7 +51,7 @@ namespace Microsoft.AspNetCore.Hosting
                         //migration can't fail for network related exception. The retry options for DbContext only 
                         //apply to transient exceptions
                         // Note that this is NOT applied when running some orchestrators (let the orchestrator to recreate the failing service)
-                        retry.Execute(() => InvokeSeeder(seeder, context, services));
+                        retryPolicy.Execute(() => InvokeSeeder(seeder, context, services));
                     }
 
                     logger.LogInformation("Migrated database associated with context {DbContextName}", typeof(TContext).Name);
